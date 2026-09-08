@@ -12,7 +12,7 @@
 //                  databaseUrl=<neon-connection-string> \
 //                  redisUrl=<upstash-connection-string>
 
-param location string = resourceGroup().location
+param location string = 'eastasia'
 param appNamePrefix string = 'txn-platform'
 param containerRegistry string
 param imageTag string = 'latest'
