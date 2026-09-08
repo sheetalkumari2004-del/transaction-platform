@@ -8,6 +8,7 @@
 //     --resource-group <rg> \
 //     --template-file deployment/main.bicep \
 //     --parameters containerRegistry=<acr-login-server> \
+//                  acrName=<acr-name-without-.azurecr.io> \
 //                  imageTag=<tag> \
 //                  databaseUrl=<neon-connection-string> \
 //                  redisUrl=<upstash-connection-string>
@@ -15,6 +16,7 @@
 param location string = resourceGroup().location
 param appNamePrefix string = 'txn-platform'
 param containerRegistry string
+param acrName string
 param imageTag string = 'latest'
 
 @secure()
@@ -28,6 +30,12 @@ param apiMinReplicas int = 1
 param apiMaxReplicas int = 3
 param workerMinReplicas int = 1
 param workerMaxReplicas int = 5
+
+var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d' // built-in AcrPull role
+
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
+  name: acrName
+}
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: '${appNamePrefix}-logs'
@@ -162,6 +170,26 @@ resource workerApp 'Microsoft.App/containerApps@2023-05-01' = {
   }
   identity: {
     type: 'SystemAssigned'
+  }
+}
+
+resource apiAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acr.id, apiApp.id, acrPullRoleId)
+  scope: acr
+  properties: {
+    principalId: apiApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
+  }
+}
+
+resource workerAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acr.id, workerApp.id, acrPullRoleId)
+  scope: acr
+  properties: {
+    principalId: workerApp.identity.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
   }
 }
 
