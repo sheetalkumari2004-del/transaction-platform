@@ -1,0 +1,26 @@
+services:
+  postgres_test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: txn_user
+      POSTGRES_PASSWORD: txn_pass
+      POSTGRES_DB: txn_platform_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data # ephemeral - fast, wiped between runs
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U txn_user -d txn_platform_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis_test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
