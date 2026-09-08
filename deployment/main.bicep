@@ -33,6 +33,12 @@ param workerMaxReplicas int = 5
 
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d' // built-in AcrPull role
 
+// trim() guards against stray whitespace/newlines that can sneak into
+// GitHub secrets (e.g. from `az acr show ... | gh secret set`), which
+// otherwise produce an invalid image reference like 'registry\n/name:tag'.
+var cleanRegistry = trim(containerRegistry)
+var cleanImageTag = trim(imageTag)
+
 resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
   name: acrName
 }
@@ -76,14 +82,14 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
         { name: 'redis-url', value: redisUrl }
       ]
       registries: [
-        { server: containerRegistry, identity: 'system' }
+        { server: cleanRegistry, identity: 'system' }
       ]
     }
     template: {
       containers: [
         {
           name: 'api'
-          image: '${containerRegistry}/transaction-platform:${imageTag}'
+          image: '${cleanRegistry}/transaction-platform:${cleanImageTag}'
           command: ['uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000']
           env: [
             { name: 'DATABASE_URL', secretRef: 'database-url' }
@@ -138,14 +144,14 @@ resource workerApp 'Microsoft.App/containerApps@2023-05-01' = {
         { name: 'redis-url', value: redisUrl }
       ]
       registries: [
-        { server: containerRegistry, identity: 'system' }
+        { server: cleanRegistry, identity: 'system' }
       ]
     }
     template: {
       containers: [
         {
           name: 'worker'
-          image: '${containerRegistry}/transaction-platform:${imageTag}'
+          image: '${cleanRegistry}/transaction-platform:${cleanImageTag}'
           command: ['python', '-m', 'app.workers.import_worker']
           env: [
             { name: 'DATABASE_URL', secretRef: 'database-url' }
@@ -194,3 +200,5 @@ resource workerAcrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 output apiUrl string = 'https://${apiApp.properties.configuration.ingress.fqdn}'
+
+      
