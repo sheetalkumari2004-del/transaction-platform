@@ -71,11 +71,6 @@ jobs:
             containerRegistry=${{ env.ACR_LOGIN_SERVER }}
             imageTag=${{ github.sha }}
             databaseUrl=${{ secrets.DATABASE_URL }}
-<<<<<<< HEAD
             redisUrl=${{ secrets.REDIS_URL }}
             acrUsername=${{ steps.acr-creds.outputs.username }}
             acrPassword=${{ steps.acr-creds.outputs.password }}
-=======
-            databaseUrlSync=${{ secrets.DATABASE_URL_SYNC }}
-            redisUrl=${{ secrets.REDIS_URL }}
->>>>>>> bcea66a996247b622899fe1fc302bbf7cb5ac9ed

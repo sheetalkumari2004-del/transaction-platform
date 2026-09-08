@@ -31,21 +31,6 @@ param apiMaxReplicas int = 3
 param workerMinReplicas int = 1
 param workerMaxReplicas int = 5
 
-<<<<<<< HEAD
-=======
-var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d' // built-in AcrPull role
-
-// trim() guards against stray whitespace/newlines that can sneak into
-// GitHub secrets (e.g. from `az acr show ... | gh secret set`), which
-// otherwise produce an invalid image reference like 'registry\n/name:tag'.
-var cleanRegistry = trim(containerRegistry)
-var cleanImageTag = trim(imageTag)
-
-resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: acrName
-}
-
->>>>>>> bcea66a996247b622899fe1fc302bbf7cb5ac9ed
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: '${appNamePrefix}-logs'
   location: location
@@ -86,7 +71,6 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
         { name: 'acr-password', value: acrPassword }
       ]
       registries: [
-<<<<<<< HEAD
         // Azure for Students / newer subscriptions provision a
         // "Consumption (express)" Container Apps environment, which does
         // NOT support managed-identity-based ACR authentication
@@ -94,16 +78,13 @@ resource apiApp 'Microsoft.App/containerApps@2023-05-01' = {
         // Username/password (ACR admin credentials) works on every
         // environment type, so that's used here instead.
         { server: containerRegistry, username: acrUsername, passwordSecretRef: 'acr-password' }
-=======
-        { server: cleanRegistry, identity: 'system' }
->>>>>>> bcea66a996247b622899fe1fc302bbf7cb5ac9ed
       ]
     }
     template: {
       containers: [
         {
           name: 'api'
-          image: '${cleanRegistry}/transaction-platform:${cleanImageTag}'
+          image: '${containerRegistry}/transaction-platform:${imageTag}'
           command: ['uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000']
           env: [
             { name: 'DATABASE_URL', secretRef: 'database-url' }
@@ -156,18 +137,14 @@ resource workerApp 'Microsoft.App/containerApps@2023-05-01' = {
         { name: 'acr-password', value: acrPassword }
       ]
       registries: [
-<<<<<<< HEAD
         { server: containerRegistry, username: acrUsername, passwordSecretRef: 'acr-password' }
-=======
-        { server: cleanRegistry, identity: 'system' }
->>>>>>> bcea66a996247b622899fe1fc302bbf7cb5ac9ed
       ]
     }
     template: {
       containers: [
         {
           name: 'worker'
-          image: '${cleanRegistry}/transaction-platform:${cleanImageTag}'
+          image: '${containerRegistry}/transaction-platform:${imageTag}'
           command: ['python', '-m', 'app.workers.import_worker']
           env: [
             { name: 'DATABASE_URL', secretRef: 'database-url' }
@@ -193,5 +170,3 @@ resource workerApp 'Microsoft.App/containerApps@2023-05-01' = {
 }
 
 output apiUrl string = 'https://${apiApp.properties.configuration.ingress.fqdn}'
-
-      
