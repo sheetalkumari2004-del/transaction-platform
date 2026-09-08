@@ -62,7 +62,7 @@ jobs:
           template: deployment/main.bicep
           parameters: >
             containerRegistry=${{ env.ACR_LOGIN_SERVER }}
-             acrName=${{ secrets.ACR_NAME }}
+            acrName=${{ secrets.ACR_NAME }}
             imageTag=${{ github.sha }}
             databaseUrl=${{ secrets.DATABASE_URL }}
             databaseUrlSync=${{ secrets.DATABASE_URL_SYNC }}
