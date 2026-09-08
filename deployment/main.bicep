@@ -12,7 +12,13 @@
 //                  databaseUrl=<neon-connection-string> \
 //                  redisUrl=<upstash-connection-string>
 
-param location string = resourceGroup().location
+// NOTE: Azure for Students subscriptions restrict deployment to a subset
+// of regions via subscription-level policy. 'eastasia' is confirmed to
+// work for this subscription (resourceGroup().location, e.g.
+// 'centralindia', is NOT on the allowed list and fails with
+// RequestDisallowedByAzure). Override -location at deploy time if your
+// subscription's allowed region differs.
+param location string = 'eastasia'
 param appNamePrefix string = 'txn-platform'
 param containerRegistry string
 param imageTag string = 'latest'
