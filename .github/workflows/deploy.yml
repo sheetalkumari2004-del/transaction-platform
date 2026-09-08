@@ -55,6 +55,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Get ACR admin credentials
+        id: acr-creds
+        run: |
+          az acr update --name ${{ secrets.ACR_NAME }} --admin-enabled true
+          echo "username=$(az acr credential show --name ${{ secrets.ACR_NAME }} --query username -o tsv)" >> $GITHUB_OUTPUT
+          echo "password=$(az acr credential show --name ${{ secrets.ACR_NAME }} --query 'passwords[0].value' -o tsv)" >> $GITHUB_OUTPUT
+
       - name: Deploy Bicep template
         uses: azure/arm-deploy@v2
         with:
@@ -62,8 +69,8 @@ jobs:
           template: deployment/main.bicep
           parameters: >
             containerRegistry=${{ env.ACR_LOGIN_SERVER }}
-            acrName=${{ secrets.ACR_NAME }}
             imageTag=${{ github.sha }}
             databaseUrl=${{ secrets.DATABASE_URL }}
-            databaseUrlSync=${{ secrets.DATABASE_URL_SYNC }}
             redisUrl=${{ secrets.REDIS_URL }}
+            acrUsername=${{ steps.acr-creds.outputs.username }}
+            acrPassword=${{ steps.acr-creds.outputs.password }}
